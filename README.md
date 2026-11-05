@@ -13,7 +13,7 @@ directly from a downloaded source ZIP.
 
 ## Download the preview
 
-[Release 0.1.0-preview.1](https://github.com/pouriajamali/service-reliability-lab/releases/tag/v0.1.0-preview.1)
+[Release 0.1.1-preview.1](https://github.com/pouriajamali/service-reliability-lab/releases/tag/v0.1.1-preview.1)
 contains the source ZIP, a standalone HTML replay and SHA-256 checksums with an
 OpenSSH signature. The HTML opens locally without .NET; the verification harness
 and regenerated traces require the SDK below. The signature authenticates the
