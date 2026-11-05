@@ -2,13 +2,13 @@
 from pathlib import Path
 import hashlib,shutil,zipfile
 ROOT=Path(__file__).resolve().parents[1]
-OUT=ROOT/'artifacts/release'
+OUT=ROOT/'artifacts/release-v0.1.1-preview.1'
 OUT.mkdir(parents=True,exist_ok=True)
 members=[]
 for f in ROOT.rglob('*'):
     if f.is_file() and not any(x in {'bin','obj','.git','artifacts','__pycache__'} for x in f.relative_to(ROOT).parts):
         members.append(f)
-archive=OUT/'service-reliability-lab-v0.1.0-preview.1.zip'
+archive=OUT/'service-reliability-lab-v0.1.1-preview.1.zip'
 with zipfile.ZipFile(archive,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) as z:
     for f in sorted(members):
         info=zipfile.ZipInfo(f.relative_to(ROOT).as_posix(),date_time=(2026,1,1,0,0,0))

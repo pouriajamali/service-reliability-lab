@@ -1,6 +1,6 @@
 # Service Reliability Lab
 
-[Try the replay](https://pouriajamali.site/demo/service-reliability/) Â· [Source and tests](src/Reliability/ReadPolicy.cs) Â· [Design decisions](docs/DESIGN.md)
+[Try the replay](https://pouriajamali.site/demo/service-reliability/) · [Release v0.1.1-preview.1](https://github.com/pouriajamali/service-reliability-lab/releases/tag/v0.1.1-preview.1) · [Source and tests](src/Reliability/ReadPolicy.cs) · [Design decisions](docs/DESIGN.md)
 
 A failing reference-data service should not receive an unlimited stream of retries.
 This C#/.NET sample makes the boundary explicit: a small attempt budget, a circuit
