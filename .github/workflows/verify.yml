@@ -1,0 +1,23 @@
+name: Verify reliability contracts
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  verify:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: dotnet run --project tests/Verify -c Release
+      - run: dotnet run --project src/Demo -c Release -- artifacts/traces.json
+      - name: Reproduce checked-in trace bytes
+        run: python scripts/compare_traces.py
+      - run: python scripts/build_demo.py --check

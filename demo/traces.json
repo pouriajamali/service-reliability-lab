@@ -1,0 +1,425 @@
+{
+  "schema": "service-reliability-replay-v1",
+  "source": "C# .NET deterministic scenario runner",
+  "scenarios": [
+    {
+      "id": "healthy",
+      "events": [
+        {
+          "correlationId": "read-001",
+          "event": "attempt",
+          "attempt": 1,
+          "circuit": "Closed",
+          "detail": "Read dependency."
+        },
+        {
+          "correlationId": "read-001",
+          "event": "success",
+          "attempt": 1,
+          "circuit": "Closed",
+          "detail": "Read completed."
+        }
+      ],
+      "results": [
+        {
+          "success": true,
+          "outcome": "success",
+          "value": "synthetic-reference-data",
+          "attempts": 1
+        }
+      ],
+      "dependencyCalls": 1,
+      "finalCircuit": "Closed"
+    },
+    {
+      "id": "transient",
+      "events": [
+        {
+          "correlationId": "read-001",
+          "event": "attempt",
+          "attempt": 1,
+          "circuit": "Closed",
+          "detail": "Read dependency."
+        },
+        {
+          "correlationId": "read-001",
+          "event": "dependency-unavailable",
+          "attempt": 1,
+          "circuit": "Closed",
+          "detail": "Dependency read did not complete."
+        },
+        {
+          "correlationId": "read-001",
+          "event": "retry-scheduled",
+          "attempt": 1,
+          "circuit": "Closed",
+          "detail": "Delay 25 ms; bounded attempt budget."
+        },
+        {
+          "correlationId": "read-001",
+          "event": "attempt",
+          "attempt": 2,
+          "circuit": "Closed",
+          "detail": "Read dependency."
+        },
+        {
+          "correlationId": "read-001",
+          "event": "success",
+          "attempt": 2,
+          "circuit": "Closed",
+          "detail": "Read completed."
+        }
+      ],
+      "results": [
+        {
+          "success": true,
+          "outcome": "success",
+          "value": "synthetic-reference-data",
+          "attempts": 2
+        }
+      ],
+      "dependencyCalls": 2,
+      "finalCircuit": "Closed"
+    },
+    {
+      "id": "exhausted",
+      "events": [
+        {
+          "correlationId": "read-001",
+          "event": "attempt",
+          "attempt": 1,
+          "circuit": "Closed",
+          "detail": "Read dependency."
+        },
+        {
+          "correlationId": "read-001",
+          "event": "dependency-unavailable",
+          "attempt": 1,
+          "circuit": "Closed",
+          "detail": "Dependency read did not complete."
+        },
+        {
+          "correlationId": "read-001",
+          "event": "retry-scheduled",
+          "attempt": 1,
+          "circuit": "Closed",
+          "detail": "Delay 25 ms; bounded attempt budget."
+        },
+        {
+          "correlationId": "read-001",
+          "event": "attempt",
+          "attempt": 2,
+          "circuit": "Closed",
+          "detail": "Read dependency."
+        },
+        {
+          "correlationId": "read-001",
+          "event": "dependency-unavailable",
+          "attempt": 2,
+          "circuit": "Closed",
+          "detail": "Dependency read did not complete."
+        },
+        {
+          "correlationId": "read-001",
+          "event": "retry-scheduled",
+          "attempt": 2,
+          "circuit": "Closed",
+          "detail": "Delay 25 ms; bounded attempt budget."
+        },
+        {
+          "correlationId": "read-001",
+          "event": "attempt",
+          "attempt": 3,
+          "circuit": "Closed",
+          "detail": "Read dependency."
+        },
+        {
+          "correlationId": "read-001",
+          "event": "dependency-unavailable",
+          "attempt": 3,
+          "circuit": "Closed",
+          "detail": "Dependency read did not complete."
+        },
+        {
+          "correlationId": "read-001",
+          "event": "exhausted",
+          "attempt": 3,
+          "circuit": "Closed",
+          "detail": "Attempt budget exhausted."
+        },
+        {
+          "correlationId": "read-002",
+          "event": "attempt",
+          "attempt": 1,
+          "circuit": "Closed",
+          "detail": "Read dependency."
+        },
+        {
+          "correlationId": "read-002",
+          "event": "dependency-unavailable",
+          "attempt": 1,
+          "circuit": "Closed",
+          "detail": "Dependency read did not complete."
+        },
+        {
+          "correlationId": "read-002",
+          "event": "retry-scheduled",
+          "attempt": 1,
+          "circuit": "Closed",
+          "detail": "Delay 25 ms; bounded attempt budget."
+        },
+        {
+          "correlationId": "read-002",
+          "event": "attempt",
+          "attempt": 2,
+          "circuit": "Closed",
+          "detail": "Read dependency."
+        },
+        {
+          "correlationId": "read-002",
+          "event": "dependency-unavailable",
+          "attempt": 2,
+          "circuit": "Closed",
+          "detail": "Dependency read did not complete."
+        },
+        {
+          "correlationId": "read-002",
+          "event": "retry-scheduled",
+          "attempt": 2,
+          "circuit": "Closed",
+          "detail": "Delay 25 ms; bounded attempt budget."
+        },
+        {
+          "correlationId": "read-002",
+          "event": "attempt",
+          "attempt": 3,
+          "circuit": "Closed",
+          "detail": "Read dependency."
+        },
+        {
+          "correlationId": "read-002",
+          "event": "dependency-unavailable",
+          "attempt": 3,
+          "circuit": "Closed",
+          "detail": "Dependency read did not complete."
+        },
+        {
+          "correlationId": "read-002",
+          "event": "exhausted",
+          "attempt": 3,
+          "circuit": "Open",
+          "detail": "Attempt budget exhausted."
+        },
+        {
+          "correlationId": "read-003",
+          "event": "rejected",
+          "attempt": 0,
+          "circuit": "Open",
+          "detail": "Circuit does not admit another request."
+        }
+      ],
+      "results": [
+        {
+          "success": false,
+          "outcome": "dependency-unavailable",
+          "value": null,
+          "attempts": 3
+        },
+        {
+          "success": false,
+          "outcome": "dependency-unavailable",
+          "value": null,
+          "attempts": 3
+        },
+        {
+          "success": false,
+          "outcome": "circuit-open",
+          "value": null,
+          "attempts": 0
+        }
+      ],
+      "dependencyCalls": 6,
+      "finalCircuit": "Open"
+    },
+    {
+      "id": "recovery",
+      "events": [
+        {
+          "correlationId": "read-001",
+          "event": "attempt",
+          "attempt": 1,
+          "circuit": "Closed",
+          "detail": "Read dependency."
+        },
+        {
+          "correlationId": "read-001",
+          "event": "dependency-unavailable",
+          "attempt": 1,
+          "circuit": "Closed",
+          "detail": "Dependency read did not complete."
+        },
+        {
+          "correlationId": "read-001",
+          "event": "retry-scheduled",
+          "attempt": 1,
+          "circuit": "Closed",
+          "detail": "Delay 25 ms; bounded attempt budget."
+        },
+        {
+          "correlationId": "read-001",
+          "event": "attempt",
+          "attempt": 2,
+          "circuit": "Closed",
+          "detail": "Read dependency."
+        },
+        {
+          "correlationId": "read-001",
+          "event": "dependency-unavailable",
+          "attempt": 2,
+          "circuit": "Closed",
+          "detail": "Dependency read did not complete."
+        },
+        {
+          "correlationId": "read-001",
+          "event": "retry-scheduled",
+          "attempt": 2,
+          "circuit": "Closed",
+          "detail": "Delay 25 ms; bounded attempt budget."
+        },
+        {
+          "correlationId": "read-001",
+          "event": "attempt",
+          "attempt": 3,
+          "circuit": "Closed",
+          "detail": "Read dependency."
+        },
+        {
+          "correlationId": "read-001",
+          "event": "dependency-unavailable",
+          "attempt": 3,
+          "circuit": "Closed",
+          "detail": "Dependency read did not complete."
+        },
+        {
+          "correlationId": "read-001",
+          "event": "exhausted",
+          "attempt": 3,
+          "circuit": "Closed",
+          "detail": "Attempt budget exhausted."
+        },
+        {
+          "correlationId": "read-002",
+          "event": "attempt",
+          "attempt": 1,
+          "circuit": "Closed",
+          "detail": "Read dependency."
+        },
+        {
+          "correlationId": "read-002",
+          "event": "dependency-unavailable",
+          "attempt": 1,
+          "circuit": "Closed",
+          "detail": "Dependency read did not complete."
+        },
+        {
+          "correlationId": "read-002",
+          "event": "retry-scheduled",
+          "attempt": 1,
+          "circuit": "Closed",
+          "detail": "Delay 25 ms; bounded attempt budget."
+        },
+        {
+          "correlationId": "read-002",
+          "event": "attempt",
+          "attempt": 2,
+          "circuit": "Closed",
+          "detail": "Read dependency."
+        },
+        {
+          "correlationId": "read-002",
+          "event": "dependency-unavailable",
+          "attempt": 2,
+          "circuit": "Closed",
+          "detail": "Dependency read did not complete."
+        },
+        {
+          "correlationId": "read-002",
+          "event": "retry-scheduled",
+          "attempt": 2,
+          "circuit": "Closed",
+          "detail": "Delay 25 ms; bounded attempt budget."
+        },
+        {
+          "correlationId": "read-002",
+          "event": "attempt",
+          "attempt": 3,
+          "circuit": "Closed",
+          "detail": "Read dependency."
+        },
+        {
+          "correlationId": "read-002",
+          "event": "dependency-unavailable",
+          "attempt": 3,
+          "circuit": "Closed",
+          "detail": "Dependency read did not complete."
+        },
+        {
+          "correlationId": "read-002",
+          "event": "exhausted",
+          "attempt": 3,
+          "circuit": "Open",
+          "detail": "Attempt budget exhausted."
+        },
+        {
+          "correlationId": "read-003",
+          "event": "rejected",
+          "attempt": 0,
+          "circuit": "Open",
+          "detail": "Circuit does not admit another request."
+        },
+        {
+          "correlationId": "read-004",
+          "event": "attempt",
+          "attempt": 1,
+          "circuit": "HalfOpen",
+          "detail": "Single recovery probe."
+        },
+        {
+          "correlationId": "read-004",
+          "event": "success",
+          "attempt": 1,
+          "circuit": "Closed",
+          "detail": "Read completed."
+        }
+      ],
+      "results": [
+        {
+          "success": false,
+          "outcome": "dependency-unavailable",
+          "value": null,
+          "attempts": 3
+        },
+        {
+          "success": false,
+          "outcome": "dependency-unavailable",
+          "value": null,
+          "attempts": 3
+        },
+        {
+          "success": false,
+          "outcome": "circuit-open",
+          "value": null,
+          "attempts": 0
+        },
+        {
+          "success": true,
+          "outcome": "success",
+          "value": "synthetic-reference-data",
+          "attempts": 1
+        }
+      ],
+      "dependencyCalls": 7,
+      "finalCircuit": "Closed"
+    }
+  ]
+}
