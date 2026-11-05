@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased - documentation
+
+- Clarify the source quick start and expected result, and link focused contribution guidance. Runtime behavior, release assets and recorded measurements are unchanged.
+
+
 ## 0.1.1-preview.1
 
 - Raised small labels, metadata and diagnostic text to at least 15 px.

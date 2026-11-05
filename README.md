@@ -32,6 +32,13 @@ python scripts/compare_traces.py
 python scripts/build_demo.py --check
 ```
 
+**Expected result:** the verifier finishes with `PASS 48 independent checks`;
+the next commands reproduce the checked-in traces and HTML. In the outage replay,
+six dependency calls exhaust two reads and the next read is blocked. Recovery
+allows one probe. These are policy outcomes, not service-latency measurements.
+See [Contributing](CONTRIBUTING.md) for a deterministic failure report or a
+focused boundary test.
+
 To rebuild the checked-in demo after an intentional scenario change:
 
 ```sh
