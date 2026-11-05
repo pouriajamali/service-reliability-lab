@@ -11,6 +11,14 @@ through a healthy read, a transient fault, an outage and a recovery. No account,
 installation or external service is required. You can also open `demo/index.html`
 directly from a downloaded source ZIP.
 
+## Download the preview
+
+[Release 0.1.0-preview.1](https://github.com/pouriajamali/service-reliability-lab/releases/tag/v0.1.0-preview.1)
+contains the source ZIP, a standalone HTML replay and SHA-256 checksums with an
+OpenSSH signature. The HTML opens locally without .NET; the verification harness
+and regenerated traces require the SDK below. The signature authenticates the
+listed release files, not the quality or performance of the policy.
+
 ## Run in ten minutes
 
 Install the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) and
