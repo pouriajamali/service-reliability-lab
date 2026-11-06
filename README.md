@@ -1,6 +1,6 @@
 # Service Reliability Lab
 
-[Try the replay](https://pouriajamali.site/demo/service-reliability/) · [Release v0.1.1-preview.1](https://github.com/pouriajamali/service-reliability-lab/releases/tag/v0.1.1-preview.1) · [Source and tests](src/Reliability/ReadPolicy.cs) · [Design decisions](docs/DESIGN.md)
+[Download the offline replay](https://github.com/pouriajamali/service-reliability-lab/releases/download/v0.1.2-preview.1/service-reliability-demo.html) · [Try the hosted replay](https://pouriajamali.site/demo/service-reliability/) · [Release v0.1.2-preview.1](https://github.com/pouriajamali/service-reliability-lab/releases/tag/v0.1.2-preview.1) · [Source and tests](src/Reliability/ReadPolicy.cs) · [Design decisions](docs/DESIGN.md)
 
 A failing reference-data service should not receive an unlimited stream of retries.
 This C#/.NET sample makes the boundary explicit: a small attempt budget, a circuit
@@ -13,11 +13,59 @@ directly from a downloaded source ZIP.
 
 ## Download the preview
 
-[Release 0.1.1-preview.1](https://github.com/pouriajamali/service-reliability-lab/releases/tag/v0.1.1-preview.1)
-contains the source ZIP, a standalone HTML replay and SHA-256 checksums with an
-OpenSSH signature. The HTML opens locally without .NET; the verification harness
-and regenerated traces require the SDK below. The signature authenticates the
-listed release files, not the quality or performance of the policy.
+[Download the HTML replay](https://github.com/pouriajamali/service-reliability-lab/releases/download/v0.1.2-preview.1/service-reliability-demo.html),
+then open that file in a browser. No install, account, .NET or network service is
+needed. Select **Outage → circuit opens** and **Run scenario**: the final view has
+6 dependency calls, 1 blocked request and an Open circuit. Select the recovery
+scenario to see one additional probe and a Closed circuit. These are recorded
+synthetic decisions, not live requests or latency measurements.
+
+[Release 0.1.2-preview.1](https://github.com/pouriajamali/service-reliability-lab/releases/tag/v0.1.2-preview.1)
+also provides the source ZIP, `BUILD-MANIFEST.json`, `SIGNING-PUBLIC-KEY.pub`,
+`SHA256SUMS.txt` and its detached OpenSSH signature. The source manifest records
+the exact Git commit/tree and every source file's size and SHA-256. The unchanged
+runtime and 48-check verifier still require the SDK below. Earlier tagged
+releases retain their original bytes and signatures.
+
+## Verify a download
+
+Download all six release files into one folder. Checksums cover the ZIP, HTML,
+manifest and public key. The detached signature signs the exact checksum bytes.
+Verify the key fingerprint against an independently trusted copy before using it:
+
+```sh
+ssh-keygen -lf SIGNING-PUBLIC-KEY.pub
+```
+
+Expected ED25519 fingerprint:
+`SHA256:AgU5bZlJSjUu0KsWMmVEEr+BfXpcMVNroTA33bHcQdU`.
+A key downloaded beside a signature does not establish trust by itself. No
+private key or account configuration is needed for verification.
+
+On Linux, from the download folder (Python is not required):
+
+```sh
+printf 'pouriajamali ' > allowed_signers
+cat SIGNING-PUBLIC-KEY.pub >> allowed_signers
+ssh-keygen -Y verify -f allowed_signers -I pouriajamali -n file -s SHA256SUMS.txt.sig < SHA256SUMS.txt
+sha256sum --check SHA256SUMS.txt
+```
+
+On Windows, with PowerShell and OpenSSH available:
+
+```powershell
+("pouriajamali " + (Get-Content -Raw .\SIGNING-PUBLIC-KEY.pub).Trim()) | Set-Content -Encoding ascii .\allowed_signers
+cmd /c "ssh-keygen -Y verify -f allowed_signers -I pouriajamali -n file -s SHA256SUMS.txt.sig < SHA256SUMS.txt"
+if ($LASTEXITCODE -ne 0) { throw 'Checksum signature verification failed' }
+Get-Content .\SHA256SUMS.txt | ForEach-Object {
+    $parts = $_ -split '  ', 2
+    if ((Get-FileHash -Algorithm SHA256 -LiteralPath $parts[1]).Hash.ToLowerInvariant() -ne $parts[0]) { throw "Checksum mismatch: $($parts[1])" }
+}
+```
+
+Expect a `Good "file" signature` for `pouriajamali` and matching file hashes.
+This verifies provenance and file integrity, not policy quality, performance or
+production readiness. The source ZIP is a developer sample, not a signed binary.
 
 ## Run in ten minutes
 
@@ -45,6 +93,32 @@ To rebuild the checked-in demo after an intentional scenario change:
 dotnet run --project src/Demo -c Release -- demo/traces.json
 python scripts/build_demo.py
 ```
+
+## Reproduce a source package
+
+From a clean Git checkout, with Git and Python 3.10+:
+
+```sh
+python scripts/test_package.py
+python scripts/package.py --commit FULL_40_CHARACTER_HEAD_SHA
+python scripts/check_package.py --directory artifacts/release-v0.1.2-preview.1 --commit FULL_40_CHARACTER_HEAD_SHA --repository .
+```
+
+Use the value from `git rev-parse HEAD`. The packager accepts only its explicit
+tracked-file allowlist at that exact commit. Dirty/untracked source, symlink
+members and tracked auxiliary/generated files are rejected; ignored build
+outputs are excluded. It reads source bytes from Git, so checkout line endings
+do not change the ZIP. Fixed ZIP metadata and uncompressed members make its
+bytes reproducible across Windows and Linux. Existing output folders are never
+overwritten; use a fresh `--output` directory for another run.
+
+CI on both operating systems executes the original 48 checks, reproduces traces
+and HTML, runs the packaging safety cases and compares the actual generated ZIP
+members/manifest against Git. The package checker does not verify an SSH
+signature; use the separate signature commands above. A dependent CI job compares
+both operating systems' actual package bytes without rebuilding. A downloaded source ZIP
+can run the verifier without Git, but reproducing its package requires a clean
+Git checkout of the manifest's commit.
 
 ## What is worth inspecting
 

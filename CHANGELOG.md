@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.2-preview.1
+
+- Reject dirty/untracked source and non-allowlisted, symlink or generated tracked
+  files before packaging; package exact Git bytes with a source commit/tree and
+  per-file manifest. Fixed stored ZIP entries reproduce across operating systems.
+- Add bounded packaging safety checks and actual member-byte validation to both
+  Windows and Linux CI. Preserve the original runtime, 48 checks and four traces.
+- Add direct offline-HTML instructions and public-key/fingerprint, signature and
+  checksum verification commands. No new executable binaries or hosted changes.
+- Preserve all earlier release assets and signatures.
+
 ## Unreleased - documentation
 
 - Clarify the source quick start and expected result, and link focused contribution guidance. Runtime behavior, release assets and recorded measurements are unchanged.

@@ -21,3 +21,47 @@ jobs:
       - name: Reproduce checked-in trace bytes
         run: python scripts/compare_traces.py
       - run: python scripts/build_demo.py --check
+      - name: Packaging safety contracts
+        run: python scripts/test_package.py
+      - name: Build exact Git source package
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: python scripts/package.py --commit "$env:SOURCE_SHA"
+        shell: pwsh
+      - name: Inspect actual source package against Git
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: python scripts/check_package.py --directory artifacts/release-v0.1.2-preview.1 --commit "$env:SOURCE_SHA" --repository .
+        shell: pwsh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: checked-source-${{ matrix.os }}
+          path: artifacts/release-v0.1.2-preview.1/
+          if-no-files-found: error
+  compare-packages:
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: checked-source-*
+          path: checked
+      - name: Compare the two checked packages without rebuilding
+        shell: python
+        run: |
+          from pathlib import Path
+          import hashlib, json
+          directories = sorted(Path('checked').iterdir())
+          assert len(directories) == 2
+          expected = {'service-reliability-lab-v0.1.2-preview.1.zip', 'service-reliability-demo.html', 'BUILD-MANIFEST.json', 'SIGNING-PUBLIC-KEY.pub', 'SHA256SUMS.txt'}
+          for directory in directories:
+              assert {p.name for p in directory.iterdir()} == expected
+          hashes = {}
+          for name in sorted(expected):
+              first, second = [(directory / name).read_bytes() for directory in directories]
+              assert first == second, name
+              hashes[name] = hashlib.sha256(first).hexdigest()
+          print(json.dumps({'status': 'BOTH_OS_PACKAGES_BYTE_IDENTICAL_NO_REBUILD', 'sha256': hashes}, sort_keys=True))

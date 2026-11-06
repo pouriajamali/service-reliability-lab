@@ -20,6 +20,12 @@ python scripts/compare_traces.py
 python scripts/build_demo.py --check
 ```
 
+For a packaging change, also run `python scripts/test_package.py`. The cases
+retain only synthetic/public fixtures under ignored `artifacts/` directories.
+Use a clean, committed checkout for the exact-source package commands in the
+README; never stash, delete or commit unrelated files to make a release pass.
+Do not add secret, account, employer or auxiliary files to the source allowlist.
+
 ## Submit a focused change
 
 Explain the behavior before and after the change. For a bug, add a regression
