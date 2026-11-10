@@ -14,3 +14,9 @@ This workflow policy separates documentation checks from unchanged runtime build
 - New retention does not delete old artifacts or logs. No artifact/cache deletion, paid capacity, self-hosted runner, account permission or budget change is performed by this policy. Any historical cleanup requires a separately reviewed inventory and explicit authorization.
 
 The lightweight job uses only the standard Ubuntu runner, Python's standard library, and actionlint 1.7.12 downloaded from its official release with an exact archive SHA256. It does not claim optional external ShellCheck/Pyflakes results. Current account storage usage is not inferred from one repository's artifact byte count.
+
+## Observed source canary
+
+The [source canary commit](https://github.com/pouriajamali/service-reliability-lab/commit/a2ede46fd688cc94f5c7231baa66303d6247cd14) passed [the documentation-policy job, both native operating systems and package comparison](https://github.com/pouriajamali/service-reliability-lab/actions/runs/42819806795). Both downloaded source artifacts contained the same five release-package files; each source ZIP contained 27 files compared byte for byte with that Git commit. The actual artifact expiry was three days after creation. These are bounded source-package and CI observations; they do not establish production reliability or future run duration.
+
+This documentation update exercises the lightweight classification path separately. Its result must be checked on its own run; the source canary above did execute the native checks.

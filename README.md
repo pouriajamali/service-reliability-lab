@@ -161,3 +161,5 @@ It is not an order-submission policy or a production deployment claim.
 
 Developed with AI assistance as independent public portfolio work. MIT licensed;
 employer code and private research are not included.
+
+[CI resource policy](docs/CI-POLICY.md): documentation-only changes get real lightweight document/pipeline checks; source, tag and manual runs retain native validation. Published runtime tags and release assets remain unchanged.
