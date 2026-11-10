@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 VERSION = "0.1.2-preview.1"
 ALLOWED = frozenset({
     ".editorconfig", ".gitattributes", ".gitignore", ".github/workflows/verify.yml",
+    ".github/ci/policy.py", ".github/ci/test_policy.py", "docs/CI-POLICY.md",
     "README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "SIGNING-PUBLIC-KEY.pub",
     "docs/DESIGN.md", "demo/index.html", "demo/template.html", "demo/traces.json",
     "src/Reliability/ReadPolicy.cs", "src/Reliability/Reliability.csproj",

@@ -63,6 +63,33 @@ class PackageContracts(unittest.TestCase):
         (self.repo / ".env").write_text("EXAMPLE=SYNTHETIC-NOT-A-SECRET\n", encoding="ascii")
         self.reject_before_output()
 
+    def test_ci_policy_members_are_exact_git_bytes(self):
+        additions = {".github/ci/policy.py", ".github/ci/test_policy.py", "docs/CI-POLICY.md"}
+        missing = [name for name in additions if not (self.repo / name).exists()]
+        for name in missing:
+            target = self.repo / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / name, target)
+        if missing:
+            self.git("add", "--", *missing)
+            self.git("commit", "-qm", "Synthetic exact CI policy additions")
+            self.commit = self.git("rev-parse", "HEAD").decode().strip()
+        proof = build(self.repo, self.output(), self.commit)
+        with zipfile.ZipFile(self.output() / proof["archive"]) as zipped:
+            self.assertTrue(additions.issubset(zipped.namelist()))
+            for name in additions:
+                self.assertEqual(zipped.read(name), self.git("show", self.commit + ":" + name))
+        self.assertTrue(inspect(self.output(), self.commit, self.repo)["gitByteComparison"])
+
+    def test_missing_required_ci_policy_member_rejected(self):
+        self.git("rm", "--", "docs/CI-POLICY.md")
+        self.git("commit", "-qm", "Synthetic missing required policy document")
+        self.commit = self.git("rev-parse", "HEAD").decode().strip()
+        self.reject_before_output()
+
+    def test_unknown_ci_policy_neighbor_rejected(self):
+        self.add_disallowed_member(".github/ci/not-reviewed.py")
+
     def test_dirty_tracked_source_rejected(self):
         with (self.repo / "README.md").open("ab") as stream:
             stream.write(b"\nSynthetic dirty source\n")
