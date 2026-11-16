@@ -70,7 +70,7 @@ production readiness. The source ZIP is a developer sample, not a signed binary.
 ## Run in ten minutes
 
 Install the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) and
-Python 3.10 or later. No NuGet packages, Python packages or broker credentials are
+Python 3.12 or later. No NuGet packages, Python packages or broker credentials are
 needed.
 
 ```sh
@@ -80,7 +80,7 @@ python scripts/compare_traces.py
 python scripts/build_demo.py --check
 ```
 
-**Expected result:** the verifier finishes with `PASS 48 independent checks`;
+**Expected result:** the candidate verifier is specified to finish with `PASS 71 independent checks` (not yet executed);
 the next commands reproduce the checked-in traces and HTML. In the outage replay,
 six dependency calls exhaust two reads and the next read is blocked. Recovery
 allows one probe. These are policy outcomes, not service-latency measurements.
@@ -96,12 +96,12 @@ python scripts/build_demo.py
 
 ## Reproduce a source package
 
-From a clean Git checkout, with Git and Python 3.10+:
+From a clean Git checkout, with Git and Python 3.12+:
 
 ```sh
 python scripts/test_package.py
 python scripts/package.py --commit FULL_40_CHARACTER_HEAD_SHA
-python scripts/check_package.py --directory artifacts/release-v0.1.2-preview.1 --commit FULL_40_CHARACTER_HEAD_SHA --repository .
+python scripts/check_package.py --directory artifacts/release-v0.1.3-preview.1 --commit FULL_40_CHARACTER_HEAD_SHA --repository .
 ```
 
 Use the value from `git rev-parse HEAD`. The packager accepts only its explicit
@@ -112,7 +112,7 @@ do not change the ZIP. Fixed ZIP metadata and uncompressed members make its
 bytes reproducible across Windows and Linux. Existing output folders are never
 overwritten; use a fresh `--output` directory for another run.
 
-CI on both operating systems executes the original 48 checks, reproduces traces
+Candidate CI on both operating systems retains the original 48 checks and adds 23 assertions, reproduces traces
 and HTML, runs the packaging safety cases and compares the actual generated ZIP
 members/manifest against Git. The package checker does not verify an SSH
 signature; use the separate signature commands above. A dependent CI job compares
@@ -163,3 +163,26 @@ Developed with AI assistance as independent public portfolio work. MIT licensed;
 employer code and private research are not included.
 
 [CI resource policy](docs/CI-POLICY.md): documentation-only changes get real lightweight document/pipeline checks; source, tag and manual runs retain native validation. Published runtime tags and release assets remain unchanged.
+
+## M1 source candidate: explain ignored completions
+
+The private source candidate adds one `stale-completion-ignored` diagnostic
+before an old epoch's terminal success/exhaustion. Its circuit field is the
+decision snapshot; the caller's result and all admission/retry rules remain
+unchanged. Six deterministic fixtures specify 23 additional assertions; the
+expected count is 71 (48 retained plus 23 new), pending native validation.
+No build/test or current release claim is made by this source preparation.
+
+After the execution gate, use the admitted .NET SDK 10.0.404 (runtime 10.0.15,
+C# 14) and a patched Python 3.12. No additional packages are needed. The new
+optional verifier evidence command, from the checkout root, is:
+
+```sh
+dotnet run --project tests/Verify -c Release -- --evidence artifacts/stale-epoch-trace.json
+```
+
+It refuses to overwrite an existing evidence file and caps actual C# trace
+output at 32 KiB. The expected result is 71 checks; this remains untested until
+the approved runtime attachment is admitted. Published download links above
+still refer to the immutable 0.1.2 preview. The proposed 0.1.3 preview is not
+published. The four recorded demo traces and hosted replay are unchanged.

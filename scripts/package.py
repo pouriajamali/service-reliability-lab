@@ -8,7 +8,7 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.1.2-preview.1"
+VERSION = "0.1.3-preview.1"
 ALLOWED = frozenset({
     ".editorconfig", ".gitattributes", ".gitignore", ".github/workflows/verify.yml",
     ".github/ci/policy.py", ".github/ci/test_policy.py", "docs/CI-POLICY.md",

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.3-preview.1 — private source candidate, untested/unpublished
+
+- Add an explanatory stale-completion-ignored diagnostic with a lock-captured
+  immutable circuit snapshot and callback outside the lock.
+- Add six bounded deterministic fixtures with independent literal event/result
+  expectations and optional CreateNew actual C# trace evidence, capped at 32 KiB.
+- Retain all 48 baseline checks; 23 new assertions specify an expected total of
+  71 pending native validation. No fresh runtime result is claimed.
+- Retain policy/admission/return/retry semantics, replay-v1 and all four demo
+  traces/HTML. Pin candidate CI SDK10.0.404 and use source package version0.1.3.
+- Preserve every old published asset/signature and current public download link.
+
+
 ## 0.1.2-preview.1
 
 - Reject dirty/untracked source and non-allowlisted, symlink or generated tracked
