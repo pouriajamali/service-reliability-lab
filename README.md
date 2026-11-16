@@ -27,46 +27,6 @@ the exact Git commit/tree and every source file's size and SHA-256. The unchange
 runtime and 48-check verifier still require the SDK below. Earlier tagged
 releases retain their original bytes and signatures.
 
-## Verify a download
-
-Download all six release files into one folder. Checksums cover the ZIP, HTML,
-manifest and public key. The detached signature signs the exact checksum bytes.
-Verify the key fingerprint against an independently trusted copy before using it:
-
-```sh
-ssh-keygen -lf SIGNING-PUBLIC-KEY.pub
-```
-
-Expected ED25519 fingerprint:
-`SHA256:AgU5bZlJSjUu0KsWMmVEEr+BfXpcMVNroTA33bHcQdU`.
-A key downloaded beside a signature does not establish trust by itself. No
-private key or account configuration is needed for verification.
-
-On Linux, from the download folder (Python is not required):
-
-```sh
-printf 'pouriajamali ' > allowed_signers
-cat SIGNING-PUBLIC-KEY.pub >> allowed_signers
-ssh-keygen -Y verify -f allowed_signers -I pouriajamali -n file -s SHA256SUMS.txt.sig < SHA256SUMS.txt
-sha256sum --check SHA256SUMS.txt
-```
-
-On Windows, with PowerShell and OpenSSH available:
-
-```powershell
-("pouriajamali " + (Get-Content -Raw .\SIGNING-PUBLIC-KEY.pub).Trim()) | Set-Content -Encoding ascii .\allowed_signers
-cmd /c "ssh-keygen -Y verify -f allowed_signers -I pouriajamali -n file -s SHA256SUMS.txt.sig < SHA256SUMS.txt"
-if ($LASTEXITCODE -ne 0) { throw 'Checksum signature verification failed' }
-Get-Content .\SHA256SUMS.txt | ForEach-Object {
-    $parts = $_ -split '  ', 2
-    if ((Get-FileHash -Algorithm SHA256 -LiteralPath $parts[1]).Hash.ToLowerInvariant() -ne $parts[0]) { throw "Checksum mismatch: $($parts[1])" }
-}
-```
-
-Expect a `Good "file" signature` for `pouriajamali` and matching file hashes.
-This verifies provenance and file integrity, not policy quality, performance or
-production readiness. The source ZIP is a developer sample, not a signed binary.
-
 ## Run in ten minutes
 
 Install the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) and
@@ -145,6 +105,46 @@ client and URI are supplied by the application; the demo does not make HTTP call
   request without a dependency call. Recovery adds one probe, for seven calls.
 - [CI workflow](.github/workflows/verify.yml): Windows and Linux run the same
   checks, regenerate trace bytes and verify the self-contained HTML.
+
+## Verify a download
+
+Download all six release files into one folder. Checksums cover the ZIP, HTML,
+manifest and public key. The detached signature signs the exact checksum bytes.
+Verify the key fingerprint against an independently trusted copy before using it:
+
+```sh
+ssh-keygen -lf SIGNING-PUBLIC-KEY.pub
+```
+
+Expected ED25519 fingerprint:
+`SHA256:AgU5bZlJSjUu0KsWMmVEEr+BfXpcMVNroTA33bHcQdU`.
+A key downloaded beside a signature does not establish trust by itself. No
+private key or account configuration is needed for verification.
+
+On Linux, from the download folder (Python is not required):
+
+```sh
+printf 'pouriajamali ' > allowed_signers
+cat SIGNING-PUBLIC-KEY.pub >> allowed_signers
+ssh-keygen -Y verify -f allowed_signers -I pouriajamali -n file -s SHA256SUMS.txt.sig < SHA256SUMS.txt
+sha256sum --check SHA256SUMS.txt
+```
+
+On Windows, with PowerShell and OpenSSH available:
+
+```powershell
+("pouriajamali " + (Get-Content -Raw .\SIGNING-PUBLIC-KEY.pub).Trim()) | Set-Content -Encoding ascii .\allowed_signers
+cmd /c "ssh-keygen -Y verify -f allowed_signers -I pouriajamali -n file -s SHA256SUMS.txt.sig < SHA256SUMS.txt"
+if ($LASTEXITCODE -ne 0) { throw 'Checksum signature verification failed' }
+Get-Content .\SHA256SUMS.txt | ForEach-Object {
+    $parts = $_ -split '  ', 2
+    if ((Get-FileHash -Algorithm SHA256 -LiteralPath $parts[1]).Hash.ToLowerInvariant() -ne $parts[0]) { throw "Checksum mismatch: $($parts[1])" }
+}
+```
+
+Expect a `Good "file" signature` for `pouriajamali` and matching file hashes.
+This verifies provenance and file integrity, not policy quality, performance or
+production readiness. The source ZIP is a developer sample, not a signed binary.
 
 ## Scope and limitations
 
