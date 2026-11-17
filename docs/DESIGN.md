@@ -70,7 +70,7 @@ objectives. Honour response-specific retry guidance where appropriate. Separate
 readiness from liveness and validate the chosen settings against an observed
 workload. Those are deployment decisions, not results claimed by this lab.
 
-### Ignored stale completions (M1 source candidate)
+### Ignored stale completions (M1)
 
 A terminal completion from an older admission epoch now emits
 `stale-completion-ignored` immediately before its existing `success` or
@@ -94,10 +94,10 @@ cancellation, and admission while the ignored-event callback is paused.
 Existing timeout tests still include real short waits. The new cases add no
 sleep, random inputs or network calls. The source contains 23 new assertions
 (including six resource-bound assertions); expected total is 71 with the
-original 48 retained. These counts are static expectations until native runs
-are admitted and executed. The candidate has not yet been built or tested.
+original 48 retained. Both native Windows/Linux rows passed all 71 checks and
+produced identical six-fixture evidence in the M1 CI run linked from the README.
 
-After execution admission, from a fresh checkout working directory:
+From a fresh checkout working directory:
 `dotnet run --project tests/Verify -c Release -- --evidence artifacts/stale-epoch-trace.json`
 writes actual C# DiagnosticEvent records with counts, at most 32 KiB, using
 CreateNew. Six fixtures each enforce at most eight calls and 64 events.

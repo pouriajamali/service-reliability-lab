@@ -1,6 +1,6 @@
 # Service Reliability Lab
 
-[Download the offline replay](https://github.com/pouriajamali/service-reliability-lab/releases/download/v0.1.2-preview.1/service-reliability-demo.html) · [Try the hosted replay](https://pouriajamali.site/demo/service-reliability/) · [Release v0.1.2-preview.1](https://github.com/pouriajamali/service-reliability-lab/releases/tag/v0.1.2-preview.1) · [Source and tests](src/Reliability/ReadPolicy.cs) · [Design decisions](docs/DESIGN.md)
+[Download the offline replay](https://github.com/pouriajamali/service-reliability-lab/releases/download/v0.1.3-preview.1/service-reliability-demo.html) · [Try the hosted replay](https://pouriajamali.site/demo/service-reliability/) · [Release v0.1.3-preview.1](https://github.com/pouriajamali/service-reliability-lab/releases/tag/v0.1.3-preview.1) · [Source and tests](src/Reliability/ReadPolicy.cs) · [Design decisions](docs/DESIGN.md)
 
 A failing reference-data service should not receive an unlimited stream of retries.
 This C#/.NET sample makes the boundary explicit: a small attempt budget, a circuit
@@ -13,18 +13,17 @@ directly from a downloaded source ZIP.
 
 ## Download the preview
 
-[Download the HTML replay](https://github.com/pouriajamali/service-reliability-lab/releases/download/v0.1.2-preview.1/service-reliability-demo.html),
+[Download the HTML replay](https://github.com/pouriajamali/service-reliability-lab/releases/download/v0.1.3-preview.1/service-reliability-demo.html),
 then open that file in a browser. No install, account, .NET or network service is
 needed. Select **Outage → circuit opens** and **Run scenario**: the final view has
 6 dependency calls, 1 blocked request and an Open circuit. Select the recovery
 scenario to see one additional probe and a Closed circuit. These are recorded
 synthetic decisions, not live requests or latency measurements.
 
-[Release 0.1.2-preview.1](https://github.com/pouriajamali/service-reliability-lab/releases/tag/v0.1.2-preview.1)
+[Release 0.1.3-preview.1](https://github.com/pouriajamali/service-reliability-lab/releases/tag/v0.1.3-preview.1)
 also provides the source ZIP, `BUILD-MANIFEST.json`, `SIGNING-PUBLIC-KEY.pub`,
 `SHA256SUMS.txt` and its detached OpenSSH signature. The source manifest records
-the exact Git commit/tree and every source file's size and SHA-256. The unchanged
-runtime and 48-check verifier still require the SDK below. Earlier tagged
+the exact Git commit/tree and every source file's size and SHA-256. The library and 71-check verifier require the SDK below. Earlier tagged
 releases retain their original bytes and signatures.
 
 ## Run in ten minutes
@@ -40,7 +39,7 @@ python scripts/compare_traces.py
 python scripts/build_demo.py --check
 ```
 
-**Expected result:** the candidate verifier expects `PASS 71 independent checks` (native CI pending);
+**Expected result:** `PASS 71 independent checks`;
 the next commands reproduce the checked-in traces and HTML. In the outage replay,
 six dependency calls exhaust two reads and the next read is blocked. Recovery
 allows one probe. These are policy outcomes, not service-latency measurements.
@@ -72,7 +71,7 @@ do not change the ZIP. Fixed ZIP metadata and uncompressed members make its
 bytes reproducible across Windows and Linux. Existing output folders are never
 overwritten; use a fresh `--output` directory for another run.
 
-CI retains the original48 checks and adds23 deterministic assertions, reproduces traces
+CI retains the original 48 checks and adds 23 deterministic assertions, reproduces traces
 and HTML, runs the packaging safety cases and compares the actual generated ZIP
 members/manifest against Git. The package checker does not verify an SSH
 signature; use the separate signature commands above. A dependent CI job compares
@@ -171,8 +170,8 @@ Open. The additive stale-completion-ignored diagnostic records why its completio
 did not change the circuit, using a snapshot captured under the lock. The callback
 runs outside the lock; return values, retries, admission and replay-v1 stay fixed.
 
-The verifier contains the original48 checks plus23 deterministic assertions across
-six bounded fixtures (71 expected pending this candidate's CI). Optional actual C#
+The verifier contains the original 48 checks plus 23 deterministic assertions across
+six bounded fixtures (71 passing on both native CI operating systems). Optional actual C#
 trace output uses CreateNew and is capped at32KiB. The four demo traces/HTML are
 unchanged. This is synthetic policy evidence, not live service or latency evidence.
 
@@ -198,4 +197,11 @@ Original restore/feed/audit/apphost semantics are preserved. The actual implicit
 NuGet graph is recorded from resolver assets instead of hiding potential fetches.
 There are no explicit PackageReferences; source packaging contains30 tracked
 source/metadata files plus BUILD-MANIFEST, not raw or materialized SDK/runtime
-binaries. Existing release keys/signatures/assets remain unchanged.
+binaries. The source ZIP and exact sealed tools/sdk10-members.jsonl alone have an
+8MiB ceiling; the inventory is also pinned by exact size and hash. Every other
+release file/member retains its 2MiB ceiling. Earlier release keys, signatures
+and assets remain unchanged.
+
+Both native rows, 18 package safety tests and cross-platform package-byte comparison
+passed in [the M1 source validation](https://github.com/pouriajamali/service-reliability-lab/actions/runs/44071254245).
+The six-fixture C# evidence had the same SHA-256 on both operating systems.
