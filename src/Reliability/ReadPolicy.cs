@@ -83,19 +83,20 @@ public sealed class ReadPolicy
             return new(epoch, false);
         }
     }
-    private void Complete(Lease lease, bool success)
+    private readonly record struct Completion(bool IgnoredStale, CircuitState Circuit);
+    private Completion Complete(Lease lease, bool success)
     {
         lock (sync)
         {
             if (lease.Epoch != epoch)
-                return; // A stale in-flight completion cannot heal a newer open circuit.
+                return new(true, state); // Capture the ignored decision under the circuit lock.
             if (lease.Probe)
             {
                 state = success ? CircuitState.Closed : CircuitState.Open;
                 failures = success ? 0 : options.FailureThreshold;
                 openUntil = now() + options.Break;
                 epoch++;
-                return;
+                return new(false, state);
             }
             if (success)
                 failures = 0;
@@ -105,7 +106,15 @@ public sealed class ReadPolicy
                 openUntil = now() + options.Break;
                 epoch++;
             }
+            return new(false, state);
         }
+    }
+    // Complete has released sync before any application diagnostics callback runs.
+    private void LogIgnoredCompletion(string id, int attempt, Completion completion)
+    {
+        if (completion.IgnoredStale)
+            emit(new(id, "stale-completion-ignored", attempt, completion.Circuit.ToString(),
+                "Completion ignored because its admission epoch was superseded."));
     }
     private void Abandon(Lease lease)
     {
@@ -149,7 +158,7 @@ public sealed class ReadPolicy
                 {
                     var result = await dependency.ReadAsync(attemptCts.Token).WaitAsync(options.Timeout, cancellationToken).ConfigureAwait(false);
                     cancellationToken.ThrowIfCancellationRequested();
-                    Complete(lease, true);
+                    LogIgnoredCompletion(correlationId, attempt, Complete(lease, true));
                     Log(correlationId, "success", attempt, "Read completed.");
                     return new(true, "success", result, attempt);
                 }
@@ -163,7 +172,7 @@ public sealed class ReadPolicy
                 Log(correlationId, reason, attempt, "Dependency read did not complete.");
                 if (attempt == maxAttempts)
                 {
-                    Complete(lease, false);
+                    LogIgnoredCompletion(correlationId, attempt, Complete(lease, false));
                     Log(correlationId, "exhausted", attempt, "Attempt budget exhausted.");
                     activity?.SetStatus(ActivityStatusCode.Error, reason);
                     return new(false, reason, null, attempt);

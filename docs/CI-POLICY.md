@@ -20,3 +20,14 @@ The lightweight job uses only the standard Ubuntu runner, Python's standard libr
 The [source canary commit](https://github.com/pouriajamali/service-reliability-lab/commit/a2ede46fd688cc94f5c7231baa66303d6247cd14) passed [the documentation-policy job, both native operating systems and package comparison](https://github.com/pouriajamali/service-reliability-lab/actions/runs/42819806795). Both downloaded source artifacts contained the same five release-package files; each source ZIP contained 27 files compared byte for byte with that Git commit. The actual artifact expiry was three days after creation. These are bounded source-package and CI observations; they do not establish production reliability or future run duration.
 
 This documentation update exercises the lightweight classification path separately. Its result must be checked on its own run; the source canary above did execute the native checks.
+
+## M1 bounded native validation
+
+[The M1 source run](https://github.com/pouriajamali/service-reliability-lab/actions/runs/44071254245)
+passed both native operating systems, 71 policy checks, 18 packaging safety tests
+and the dependent byte comparison. Fresh sealed SDK10.0.404 acquisition occurs
+after the project's actual kernel-cap and SDK0 checks. All fresh SDK bytes count
+in the explicitly approved 4GiB temporary-file budget. The 8MiB release exception
+is restricted to the source ZIP and its exact size/hash-pinned member inventory;
+other file/member limits remain 2MiB. CPU, memory, process, time, log, artifact
+retention and job topology remain as documented in the README and workflow.

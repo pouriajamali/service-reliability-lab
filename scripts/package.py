@@ -8,8 +8,9 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.1.2-preview.1"
+VERSION = "0.1.3-preview.1"
 ALLOWED = frozenset({
+    "tools/sdk10_hosted_inputs.py", "tools/sdk10-inputs.lock.json", "tools/sdk10-members.jsonl",
     ".editorconfig", ".gitattributes", ".gitignore", ".github/workflows/verify.yml",
     ".github/ci/policy.py", ".github/ci/test_policy.py", "docs/CI-POLICY.md",
     "README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "SIGNING-PUBLIC-KEY.pub",

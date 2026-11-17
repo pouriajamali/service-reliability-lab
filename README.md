@@ -1,6 +1,6 @@
 # Service Reliability Lab
 
-[Download the offline replay](https://github.com/pouriajamali/service-reliability-lab/releases/download/v0.1.2-preview.1/service-reliability-demo.html) · [Try the hosted replay](https://pouriajamali.site/demo/service-reliability/) · [Release v0.1.2-preview.1](https://github.com/pouriajamali/service-reliability-lab/releases/tag/v0.1.2-preview.1) · [Source and tests](src/Reliability/ReadPolicy.cs) · [Design decisions](docs/DESIGN.md)
+[Download the offline replay](https://github.com/pouriajamali/service-reliability-lab/releases/download/v0.1.3-preview.1/service-reliability-demo.html) · [Try the hosted replay](https://pouriajamali.site/demo/service-reliability/) · [Release v0.1.3-preview.1](https://github.com/pouriajamali/service-reliability-lab/releases/tag/v0.1.3-preview.1) · [Source and tests](src/Reliability/ReadPolicy.cs) · [Design decisions](docs/DESIGN.md)
 
 A failing reference-data service should not receive an unlimited stream of retries.
 This C#/.NET sample makes the boundary explicit: a small attempt budget, a circuit
@@ -13,24 +13,23 @@ directly from a downloaded source ZIP.
 
 ## Download the preview
 
-[Download the HTML replay](https://github.com/pouriajamali/service-reliability-lab/releases/download/v0.1.2-preview.1/service-reliability-demo.html),
+[Download the HTML replay](https://github.com/pouriajamali/service-reliability-lab/releases/download/v0.1.3-preview.1/service-reliability-demo.html),
 then open that file in a browser. No install, account, .NET or network service is
 needed. Select **Outage → circuit opens** and **Run scenario**: the final view has
 6 dependency calls, 1 blocked request and an Open circuit. Select the recovery
 scenario to see one additional probe and a Closed circuit. These are recorded
 synthetic decisions, not live requests or latency measurements.
 
-[Release 0.1.2-preview.1](https://github.com/pouriajamali/service-reliability-lab/releases/tag/v0.1.2-preview.1)
+[Release 0.1.3-preview.1](https://github.com/pouriajamali/service-reliability-lab/releases/tag/v0.1.3-preview.1)
 also provides the source ZIP, `BUILD-MANIFEST.json`, `SIGNING-PUBLIC-KEY.pub`,
 `SHA256SUMS.txt` and its detached OpenSSH signature. The source manifest records
-the exact Git commit/tree and every source file's size and SHA-256. The unchanged
-runtime and 48-check verifier still require the SDK below. Earlier tagged
+the exact Git commit/tree and every source file's size and SHA-256. The library and 71-check verifier require the SDK below. Earlier tagged
 releases retain their original bytes and signatures.
 
 ## Run in ten minutes
 
 Install the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) and
-Python 3.10 or later. No NuGet packages, Python packages or broker credentials are
+Python 3.12 or later. No NuGet packages, Python packages or broker credentials are
 needed.
 
 ```sh
@@ -40,7 +39,7 @@ python scripts/compare_traces.py
 python scripts/build_demo.py --check
 ```
 
-**Expected result:** the verifier finishes with `PASS 48 independent checks`;
+**Expected result:** `PASS 71 independent checks`;
 the next commands reproduce the checked-in traces and HTML. In the outage replay,
 six dependency calls exhaust two reads and the next read is blocked. Recovery
 allows one probe. These are policy outcomes, not service-latency measurements.
@@ -56,12 +55,12 @@ python scripts/build_demo.py
 
 ## Reproduce a source package
 
-From a clean Git checkout, with Git and Python 3.10+:
+From a clean Git checkout, with Git and Python 3.12+:
 
 ```sh
 python scripts/test_package.py
 python scripts/package.py --commit FULL_40_CHARACTER_HEAD_SHA
-python scripts/check_package.py --directory artifacts/release-v0.1.2-preview.1 --commit FULL_40_CHARACTER_HEAD_SHA --repository .
+python scripts/check_package.py --directory artifacts/release-v0.1.3-preview.1 --commit FULL_40_CHARACTER_HEAD_SHA --repository .
 ```
 
 Use the value from `git rev-parse HEAD`. The packager accepts only its explicit
@@ -72,7 +71,7 @@ do not change the ZIP. Fixed ZIP metadata and uncompressed members make its
 bytes reproducible across Windows and Linux. Existing output folders are never
 overwritten; use a fresh `--output` directory for another run.
 
-CI on both operating systems executes the original 48 checks, reproduces traces
+CI retains the original 48 checks and adds 23 deterministic assertions, reproduces traces
 and HTML, runs the packaging safety cases and compares the actual generated ZIP
 members/manifest against Git. The package checker does not verify an SSH
 signature; use the separate signature commands above. A dependent CI job compares
@@ -163,3 +162,46 @@ Developed with AI assistance as independent public portfolio work. MIT licensed;
 employer code and private research are not included.
 
 [CI resource policy](docs/CI-POLICY.md): documentation-only changes get real lightweight document/pipeline checks; source, tag and manual runs retain native validation. Published runtime tags and release assets remain unchanged.
+
+## Explain ignored completions
+
+A stale admitted read can return its result while a newer circuit epoch remains
+Open. The additive stale-completion-ignored diagnostic records why its completion
+did not change the circuit, using a snapshot captured under the lock. The callback
+runs outside the lock; return values, retries, admission and replay-v1 stay fixed.
+
+The verifier contains the original 48 checks plus 23 deterministic assertions across
+six bounded fixtures (71 passing on both native CI operating systems). Optional actual C#
+trace output uses CreateNew and is capped at32KiB. The four demo traces/HTML are
+unchanged. This is synthetic policy evidence, not live service or latency evidence.
+
+## Bounded native CI and SDK source
+
+The existing sequential Ubuntu24/Windows2025 rows use trusted vendor Python/OS
+starter tooling, then project12's own actual cgroup/Job/held-child and SDK0 guards.
+The shared tools/sdk10_hosted_inputs.py source is used unchanged with its exact
+catalog/full inventory: raw SHA256/SHA512, all headers before fresh writes, then
+full member readback. SDK execution follows successful own-cap and input proof.
+No setup-dotnet, system SDK, installer, SDK11 or multiversion fallback is used.
+
+Caps remain one CPU,2GiB RAM,128 tasks/processes, at most300seconds per phase
+(the shared input phase240seconds), and1200seconds per OS. Windows JobMemory is
+a committed-memory limit, not a no-paging claim. Linux uses one fixed systemd
+unit with the actual nonroot runner UID/GID, CPU/memory/pids/swap0 controls.
+Explicit owner permission allows at most4GiB project12 temporary files including
+all fresh raw/materialized SDK, product/cache/log/evidence files; actual free
+space and aggregate guards precede acquisition. Logs stay at most8MiB and fixture
+caps stay six cases/eight calls/64events each. Required failures remain failures.
+
+Original restore/feed/audit/apphost semantics are preserved. The actual implicit
+NuGet graph is recorded from resolver assets instead of hiding potential fetches.
+There are no explicit PackageReferences; source packaging contains30 tracked
+source/metadata files plus BUILD-MANIFEST, not raw or materialized SDK/runtime
+binaries. The source ZIP and exact sealed tools/sdk10-members.jsonl alone have an
+8MiB ceiling; the inventory is also pinned by exact size and hash. Every other
+release file/member retains its 2MiB ceiling. Earlier release keys, signatures
+and assets remain unchanged.
+
+Both native rows, 18 package safety tests and cross-platform package-byte comparison
+passed in [the M1 source validation](https://github.com/pouriajamali/service-reliability-lab/actions/runs/44071254245).
+The six-fixture C# evidence had the same SHA-256 on both operating systems.

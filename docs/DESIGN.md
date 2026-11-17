@@ -69,3 +69,37 @@ policy; include caller deadlines, jitter, retry quotas, rate limits and service
 objectives. Honour response-specific retry guidance where appropriate. Separate
 readiness from liveness and validate the chosen settings against an observed
 workload. Those are deployment decisions, not results claimed by this lab.
+
+### Ignored stale completions (M1)
+
+A terminal completion from an older admission epoch now emits
+`stale-completion-ignored` immediately before its existing `success` or
+`exhausted` event for that correlation. The result still belongs to the caller:
+a successful old read can return success while the circuit remains Open.
+The event has the existing five-field DiagnosticEvent shape, terminal attempt,
+a circuit snapshot captured under the state lock, and fixed detail:
+"Completion ignored because its admission epoch was superseded."
+
+The immutable private completion disposition is returned before the application
+callback runs. Callbacks must not throw and are never invoked under the circuit
+lock. Only this new event is a decision snapshot; concurrent events do not form
+a globally ordered history. Current-epoch completions, rejections, intermediate
+retries and abandoned/cancelled work do not produce it. Admission, waiting,
+return values, retry budgets and the public replay-v1 shape are unchanged.
+
+Six new bounded fixtures in Verify use literal result/event expectations,
+TaskCompletionSource gates and a manual monotonic clock. They cover old success,
+old failure without extending the original deadline, fresh success/failure,
+cancellation, and admission while the ignored-event callback is paused.
+Existing timeout tests still include real short waits. The new cases add no
+sleep, random inputs or network calls. The source contains 23 new assertions
+(including six resource-bound assertions); expected total is 71 with the
+original 48 retained. Both native Windows/Linux rows passed all 71 checks and
+produced identical six-fixture evidence in the M1 CI run linked from the README.
+
+From a fresh checkout working directory:
+`dotnet run --project tests/Verify -c Release -- --evidence artifacts/stale-epoch-trace.json`
+writes actual C# DiagnosticEvent records with counts, at most 32 KiB, using
+CreateNew. Six fixtures each enforce at most eight calls and 64 events.
+The four existing demo traces and HTML remain unchanged; this test evidence is
+not a new browser scenario, live dependency or performance measurement.

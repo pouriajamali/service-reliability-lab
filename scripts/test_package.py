@@ -155,6 +155,45 @@ class PackageContracts(unittest.TestCase):
             build(self.repo, self.output(), self.commit)
         self.assertEqual((self.output() / "SHA256SUMS.txt").read_bytes(), before)
 
+
+    def test_non_source_release_limit_stays_two_mib(self):
+        build(self.repo, self.output(), self.commit)
+        (self.output() / "service-reliability-demo.html").write_bytes(b"x" * (2 * 1024 * 1024 + 1))
+        with self.assertRaisesRegex(ValueError, "oversized release file"):
+            inspect(self.output(), self.commit, self.repo)
+
+    def test_source_zip_exception_stays_eight_mib(self):
+        proof = build(self.repo, self.output(), self.commit)
+        archive = self.output() / proof["archive"]
+        with archive.open("ab") as stream:
+            stream.write(b"x" * (8 * 1024 * 1024 + 1 - archive.stat().st_size))
+        with self.assertRaisesRegex(ValueError, "oversized release file"):
+            inspect(self.output(), self.commit, self.repo)
+
+    def test_other_source_member_limit_stays_two_mib(self):
+        proof = build(self.repo, self.output(), self.commit)
+        archive = self.output() / proof["archive"]
+        with zipfile.ZipFile(archive) as zipped:
+            members = [(info, zipped.read(info.filename)) for info in zipped.infolist()]
+        replacement = self.output() / "replacement.zip"
+        with zipfile.ZipFile(replacement, "x", compression=zipfile.ZIP_STORED) as zipped:
+            for info, data in members:
+                zipped.writestr(info, b"x" * (2 * 1024 * 1024 + 1) if info.filename == "README.md" else data)
+        replacement.replace(archive)
+        self.refresh_zip_checksum()
+        with self.assertRaisesRegex(ValueError, "Noncanonical archive member"):
+            inspect(self.output(), self.commit, self.repo)
+
+    def test_sealed_sdk_metadata_identity_not_general_large_member(self):
+        path = self.repo / "tools/sdk10-members.jsonl"
+        with path.open("ab") as stream:
+            stream.write(b"x")
+        self.git("add", "--", "tools/sdk10-members.jsonl")
+        self.git("commit", "-qm", "Synthetic changed sealed metadata")
+        self.commit = self.git("rev-parse", "HEAD").decode().strip()
+        build(self.repo, self.output(), self.commit)
+        with self.assertRaisesRegex(ValueError, "Sealed SDK member identity differs"):
+            inspect(self.output(), self.commit, self.repo)
 if __name__ == "__main__":
     (ROOT / "artifacts").mkdir(exist_ok=True)
     unittest.main(verbosity=2)

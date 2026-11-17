@@ -6,6 +6,12 @@ import zipfile
 from pathlib import Path
 from package import ALLOWED, KEY, MANIFEST, VERSION, manifest, sha, snapshot
 
+SDK_INVENTORY = "tools/sdk10-members.jsonl"
+SDK_INVENTORY_SHA256 = "edb30fd64e0d8e1c476e27a019dbb00fd7fe76989a5c3c991cbab16627f4d9cf"
+SDK_INVENTORY_BYTES = 5015394
+DEFAULT_LIMIT = 2 * 1024 * 1024
+SOURCE_LIMIT = 8 * 1024 * 1024  # Explicit owner exception for source ZIP/one sealed member only.
+
 def inspect(directory, commit, repository=None):
     directory = Path(directory).resolve()
     expected = {"service-reliability-lab-v" + VERSION + ".zip", "service-reliability-demo.html", MANIFEST, KEY}
@@ -19,7 +25,7 @@ def inspect(directory, commit, repository=None):
         raise ValueError("Checksum product list differs")
     for name, digest in sums.items():
         path = directory / name
-        if path.is_symlink() or not path.is_file() or path.stat().st_size > 2 * 1024 * 1024:
+        if path.is_symlink() or not path.is_file() or path.stat().st_size > (SOURCE_LIMIT if name == "service-reliability-lab-v" + VERSION + ".zip" else DEFAULT_LIMIT):
             raise ValueError("Unsafe or oversized release file")
         if sha(path.read_bytes()) != digest:
             raise ValueError("Release checksum mismatch: " + name)
@@ -44,11 +50,13 @@ def inspect(directory, commit, repository=None):
         for info in members:
             if (info.compress_type != zipfile.ZIP_STORED or info.create_system != 3 or
                     info.date_time != (2026, 1, 1, 0, 0, 0) or info.external_attr != 0o100644 << 16 or
-                    info.file_size > 2 * 1024 * 1024):
+                    info.file_size > (SOURCE_LIMIT if info.filename == SDK_INVENTORY else DEFAULT_LIMIT)):
                 raise ValueError("Noncanonical archive member")
         if zipped.read(MANIFEST) != (directory / MANIFEST).read_bytes():
             raise ValueError("Inner and outer manifests differ")
         files = {name: zipped.read(name) for name in ALLOWED}
+    if len(files[SDK_INVENTORY]) != SDK_INVENTORY_BYTES or sha(files[SDK_INVENTORY]) != SDK_INVENTORY_SHA256:
+        raise ValueError("Sealed SDK member identity differs")
     for name, raw in files.items():
         if inventory[name] != {"path": name, "bytes": len(raw), "sha256": sha(raw)}:
             raise ValueError("Source member mismatch: " + name)
