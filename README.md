@@ -27,6 +27,85 @@ the exact Git commit/tree and every source file's size and SHA-256. The unchange
 runtime and 48-check verifier still require the SDK below. Earlier tagged
 releases retain their original bytes and signatures.
 
+## Run in ten minutes
+
+Install the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) and
+Python 3.12 or later. No NuGet packages, Python packages or broker credentials are
+needed.
+
+```sh
+dotnet run --project tests/Verify -c Release
+dotnet run --project src/Demo -c Release -- artifacts/traces.json
+python scripts/compare_traces.py
+python scripts/build_demo.py --check
+```
+
+**Expected result:** the candidate verifier expects `PASS 71 independent checks` (native CI pending);
+the next commands reproduce the checked-in traces and HTML. In the outage replay,
+six dependency calls exhaust two reads and the next read is blocked. Recovery
+allows one probe. These are policy outcomes, not service-latency measurements.
+See [Contributing](CONTRIBUTING.md) for a deterministic failure report or a
+focused boundary test.
+
+To rebuild the checked-in demo after an intentional scenario change:
+
+```sh
+dotnet run --project src/Demo -c Release -- demo/traces.json
+python scripts/build_demo.py
+```
+
+## Reproduce a source package
+
+From a clean Git checkout, with Git and Python 3.12+:
+
+```sh
+python scripts/test_package.py
+python scripts/package.py --commit FULL_40_CHARACTER_HEAD_SHA
+python scripts/check_package.py --directory artifacts/release-v0.1.3-preview.1 --commit FULL_40_CHARACTER_HEAD_SHA --repository .
+```
+
+Use the value from `git rev-parse HEAD`. The packager accepts only its explicit
+tracked-file allowlist at that exact commit. Dirty/untracked source, symlink
+members and tracked auxiliary/generated files are rejected; ignored build
+outputs are excluded. It reads source bytes from Git, so checkout line endings
+do not change the ZIP. Fixed ZIP metadata and uncompressed members make its
+bytes reproducible across Windows and Linux. Existing output folders are never
+overwritten; use a fresh `--output` directory for another run.
+
+CI retains the original48 checks and adds23 deterministic assertions, reproduces traces
+and HTML, runs the packaging safety cases and compares the actual generated ZIP
+members/manifest against Git. The package checker does not verify an SSH
+signature; use the separate signature commands above. A dependent CI job compares
+both operating systems' actual package bytes without rebuilding. A downloaded source ZIP
+can run the verifier without Git, but reproducing its package requires a clean
+Git checkout of the manifest's commit.
+
+## What is worth inspecting
+
+| Decision | What to inspect |
+| --- | --- |
+| Retry only dependency reads | `IReadDependency` exposes a read; the optional HTTP adapter issues only GET. 408, 429, 5xx and transport failures are transient. Authentication, validation and programming errors are not retried. |
+| Bound both attempts and waiting | Up to three attempts per read; each has a 200 ms waiting timeout. An exhausted logical read counts as one circuit failure, rather than three. |
+| One recovery probe | Two exhausted reads open the circuit for 30 seconds. Exactly one half-open probe is admitted; other callers are rejected. The probe has no retry. |
+| Protect newer state from old work | An epoch check prevents an older in-flight success from closing a circuit that has since opened. |
+| Preserve caller cancellation | Cancellation is propagated without retry or failure-count inflation. A cancelled half-open probe releases the gate for another probe. |
+| Observe actual decisions | Structured events contain correlation ID, attempt and circuit state. BCL `ActivitySource` emits the correlation tag; `Meter` counts attempts and circuit rejections. Tests attach real listeners. |
+
+The optional HTTP adapter accepts a UTF-8 reference payload up to 64 KiB. Its
+client and URI are supplied by the application; the demo does not make HTTP calls.
+
+## Evidence
+
+- [Verification harness](tests/Verify/Program.cs): state boundaries, concurrency,
+  stale completions, cancellation, non-cooperative timeout behavior, HTTP error
+  classification, payload bounds and telemetry listeners. Cancellation/fault race
+  cases cover both an ordinary read and an admitted half-open probe.
+- [Generated traces](demo/traces.json): fixed inputs and replay events. The outage
+  uses six dependency attempts across two logical reads, then rejects the third
+  request without a dependency call. Recovery adds one probe, for seven calls.
+- [CI workflow](.github/workflows/verify.yml): Windows and Linux run the same
+  checks, regenerate trace bytes and verify the self-contained HTML.
+
 ## Verify a download
 
 Download all six release files into one folder. Checksums cover the ZIP, HTML,
@@ -67,85 +146,6 @@ Expect a `Good "file" signature` for `pouriajamali` and matching file hashes.
 This verifies provenance and file integrity, not policy quality, performance or
 production readiness. The source ZIP is a developer sample, not a signed binary.
 
-## Run in ten minutes
-
-Install the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) and
-Python 3.12 or later. No NuGet packages, Python packages or broker credentials are
-needed.
-
-```sh
-dotnet run --project tests/Verify -c Release
-dotnet run --project src/Demo -c Release -- artifacts/traces.json
-python scripts/compare_traces.py
-python scripts/build_demo.py --check
-```
-
-**Expected result:** the candidate verifier is specified to finish with `PASS 71 independent checks` (not yet executed);
-the next commands reproduce the checked-in traces and HTML. In the outage replay,
-six dependency calls exhaust two reads and the next read is blocked. Recovery
-allows one probe. These are policy outcomes, not service-latency measurements.
-See [Contributing](CONTRIBUTING.md) for a deterministic failure report or a
-focused boundary test.
-
-To rebuild the checked-in demo after an intentional scenario change:
-
-```sh
-dotnet run --project src/Demo -c Release -- demo/traces.json
-python scripts/build_demo.py
-```
-
-## Reproduce a source package
-
-From a clean Git checkout, with Git and Python 3.12+:
-
-```sh
-python scripts/test_package.py
-python scripts/package.py --commit FULL_40_CHARACTER_HEAD_SHA
-python scripts/check_package.py --directory artifacts/release-v0.1.3-preview.1 --commit FULL_40_CHARACTER_HEAD_SHA --repository .
-```
-
-Use the value from `git rev-parse HEAD`. The packager accepts only its explicit
-tracked-file allowlist at that exact commit. Dirty/untracked source, symlink
-members and tracked auxiliary/generated files are rejected; ignored build
-outputs are excluded. It reads source bytes from Git, so checkout line endings
-do not change the ZIP. Fixed ZIP metadata and uncompressed members make its
-bytes reproducible across Windows and Linux. Existing output folders are never
-overwritten; use a fresh `--output` directory for another run.
-
-Candidate CI on both operating systems retains the original 48 checks and adds 23 assertions, reproduces traces
-and HTML, runs the packaging safety cases and compares the actual generated ZIP
-members/manifest against Git. The package checker does not verify an SSH
-signature; use the separate signature commands above. A dependent CI job compares
-both operating systems' actual package bytes without rebuilding. A downloaded source ZIP
-can run the verifier without Git, but reproducing its package requires a clean
-Git checkout of the manifest's commit.
-
-## What is worth inspecting
-
-| Decision | What to inspect |
-| --- | --- |
-| Retry only dependency reads | `IReadDependency` exposes a read; the optional HTTP adapter issues only GET. 408, 429, 5xx and transport failures are transient. Authentication, validation and programming errors are not retried. |
-| Bound both attempts and waiting | Up to three attempts per read; each has a 200 ms waiting timeout. An exhausted logical read counts as one circuit failure, rather than three. |
-| One recovery probe | Two exhausted reads open the circuit for 30 seconds. Exactly one half-open probe is admitted; other callers are rejected. The probe has no retry. |
-| Protect newer state from old work | An epoch check prevents an older in-flight success from closing a circuit that has since opened. |
-| Preserve caller cancellation | Cancellation is propagated without retry or failure-count inflation. A cancelled half-open probe releases the gate for another probe. |
-| Observe actual decisions | Structured events contain correlation ID, attempt and circuit state. BCL `ActivitySource` emits the correlation tag; `Meter` counts attempts and circuit rejections. Tests attach real listeners. |
-
-The optional HTTP adapter accepts a UTF-8 reference payload up to 64 KiB. Its
-client and URI are supplied by the application; the demo does not make HTTP calls.
-
-## Evidence
-
-- [Verification harness](tests/Verify/Program.cs): state boundaries, concurrency,
-  stale completions, cancellation, non-cooperative timeout behavior, HTTP error
-  classification, payload bounds and telemetry listeners. Cancellation/fault race
-  cases cover both an ordinary read and an admitted half-open probe.
-- [Generated traces](demo/traces.json): fixed inputs and replay events. The outage
-  uses six dependency attempts across two logical reads, then rejects the third
-  request without a dependency call. Recovery adds one probe, for seven calls.
-- [CI workflow](.github/workflows/verify.yml): Windows and Linux run the same
-  checks, regenerate trace bytes and verify the self-contained HTML.
-
 ## Scope and limitations
 
 This is an independent engineering sample using synthetic reference-data reads.
@@ -164,25 +164,38 @@ employer code and private research are not included.
 
 [CI resource policy](docs/CI-POLICY.md): documentation-only changes get real lightweight document/pipeline checks; source, tag and manual runs retain native validation. Published runtime tags and release assets remain unchanged.
 
-## M1 source candidate: explain ignored completions
+## Explain ignored completions
 
-The private source candidate adds one `stale-completion-ignored` diagnostic
-before an old epoch's terminal success/exhaustion. Its circuit field is the
-decision snapshot; the caller's result and all admission/retry rules remain
-unchanged. Six deterministic fixtures specify 23 additional assertions; the
-expected count is 71 (48 retained plus 23 new), pending native validation.
-No build/test or current release claim is made by this source preparation.
+A stale admitted read can return its result while a newer circuit epoch remains
+Open. The additive stale-completion-ignored diagnostic records why its completion
+did not change the circuit, using a snapshot captured under the lock. The callback
+runs outside the lock; return values, retries, admission and replay-v1 stay fixed.
 
-After the execution gate, use the admitted .NET SDK 10.0.404 (runtime 10.0.15,
-C# 14) and a patched Python 3.12. No additional packages are needed. The new
-optional verifier evidence command, from the checkout root, is:
+The verifier contains the original48 checks plus23 deterministic assertions across
+six bounded fixtures (71 expected pending this candidate's CI). Optional actual C#
+trace output uses CreateNew and is capped at32KiB. The four demo traces/HTML are
+unchanged. This is synthetic policy evidence, not live service or latency evidence.
 
-```sh
-dotnet run --project tests/Verify -c Release -- --evidence artifacts/stale-epoch-trace.json
-```
+## Bounded native CI and SDK source
 
-It refuses to overwrite an existing evidence file and caps actual C# trace
-output at 32 KiB. The expected result is 71 checks; this remains untested until
-the approved runtime attachment is admitted. Published download links above
-still refer to the immutable 0.1.2 preview. The proposed 0.1.3 preview is not
-published. The four recorded demo traces and hosted replay are unchanged.
+The existing sequential Ubuntu24/Windows2025 rows use trusted vendor Python/OS
+starter tooling, then project12's own actual cgroup/Job/held-child and SDK0 guards.
+The shared tools/sdk10_hosted_inputs.py source is used unchanged with its exact
+catalog/full inventory: raw SHA256/SHA512, all headers before fresh writes, then
+full member readback. SDK execution follows successful own-cap and input proof.
+No setup-dotnet, system SDK, installer, SDK11 or multiversion fallback is used.
+
+Caps remain one CPU,2GiB RAM,128 tasks/processes, at most300seconds per phase
+(the shared input phase240seconds), and1200seconds per OS. Windows JobMemory is
+a committed-memory limit, not a no-paging claim. Linux uses one fixed systemd
+unit with the actual nonroot runner UID/GID, CPU/memory/pids/swap0 controls.
+Explicit owner permission allows at most4GiB project12 temporary files including
+all fresh raw/materialized SDK, product/cache/log/evidence files; actual free
+space and aggregate guards precede acquisition. Logs stay at most8MiB and fixture
+caps stay six cases/eight calls/64events each. Required failures remain failures.
+
+Original restore/feed/audit/apphost semantics are preserved. The actual implicit
+NuGet graph is recorded from resolver assets instead of hiding potential fetches.
+There are no explicit PackageReferences; source packaging contains30 tracked
+source/metadata files plus BUILD-MANIFEST, not raw or materialized SDK/runtime
+binaries. Existing release keys/signatures/assets remain unchanged.
