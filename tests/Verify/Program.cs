@@ -223,9 +223,9 @@ void CheckIgnored(StaleFixture f, string correlation, string terminal)
     using var cts = new CancellationTokenSource();
     var pending = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
     using var registration = cts.Token.Register(() => pending.TrySetCanceled(cts.Token));
-    var probe = p.ReadAsync(f.Dependency(_ => pending.Task), "cancelled-probe", cts.Token);
+    var cancelledProbeTask = p.ReadAsync(f.Dependency(_ => pending.Task), "cancelled-probe", cts.Token);
     cts.Cancel();
-    await Throws<OperationCanceledException>(() => probe, "M1:N3 probe cancellation remains cancellation");
+    await Throws<OperationCanceledException>(() => cancelledProbeTask, "M1:N3 probe cancellation remains cancellation");
     var result = await p.ReadAsync(f.Dependency(_ => Task.FromResult("ok")), "replacement");
     Check(result.Success && f.Calls == 3 && p.State == CircuitState.Closed &&
         f.Snapshot().All(e => e.Event != ignored), "M1:N3 cancelled probe releases admission without ignored event");
@@ -255,14 +255,14 @@ void CheckIgnored(StaleFixture f, string correlation, string terminal)
     CheckIgnored(f, "old", "success");
     f.Ticks = TimeSpan.FromSeconds(30).Ticks;
     var probeGate = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-    var probe = p.ReadAsync(f.Dependency(_ => probeGate.Task), "probe");
+    var heldProbeTask = p.ReadAsync(f.Dependency(_ => probeGate.Task), "probe");
     try
     {
         result = await p.ReadAsync(f.Dependency(_ => Task.FromResult("unused")), "probe-contender");
         Check(result.Attempts == 0 && f.Calls == 3 && p.State == CircuitState.HalfOpen,
             "M1:N4 one probe remains the admission limit");
     }
-    finally { probeGate.TrySetResult("ok"); await probe; }
+    finally { probeGate.TrySetResult("ok"); await heldProbeTask; }
     Check(p.State == CircuitState.Closed, "M1:N4 probe completes after causal gate release");
 }
 foreach (var f in staleFixtures)
