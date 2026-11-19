@@ -1,5 +1,17 @@
 # Service Reliability Lab
 
+<!-- reviewer-entry:begin -->
+## Start with the implementation
+
+The dependency policy and executable verifier are C#. The HTML demo replays decisions recorded by the .NET runner; it does not send live dependency requests.
+
+[ReadPolicy.cs](src/Reliability/ReadPolicy.cs) → [Program.cs](tests/Verify/Program.cs) → [DESIGN.md](docs/DESIGN.md)
+
+[Open the browser demo](https://pouriajamali.site/demo/service-reliability/) · [Preview releases](https://github.com/pouriajamali/service-reliability-lab/releases)
+
+The existing setup, validation results and release boundaries continue below.
+<!-- reviewer-entry:end -->
+
 [Download the offline replay](https://github.com/pouriajamali/service-reliability-lab/releases/download/v0.1.3-preview.1/service-reliability-demo.html) · [Try the hosted replay](https://pouriajamali.site/demo/service-reliability/) · [Release v0.1.3-preview.1](https://github.com/pouriajamali/service-reliability-lab/releases/tag/v0.1.3-preview.1) · [Source and tests](src/Reliability/ReadPolicy.cs) · [Design decisions](docs/DESIGN.md)
 
 A failing reference-data service should not receive an unlimited stream of retries.
