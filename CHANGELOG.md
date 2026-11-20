@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.4-preview.1
+
+- Package an exact stable SDK10.0.404 `global.json` pin, disabling SDK
+  roll-forward and prerelease selection. Keep current .NET10 LTS/C#14 and
+  runtime10.0.15 servicing rather than migrate majors without a product need.
+- Preserve all C# policy/tests, epoch behavior, retries, circuit transitions,
+  replay-v1 and the four demo traces/HTML. No executable binaries are distributed.
+- Maintenance validation: the local Ubuntu24.04 acceptance is 71 policy checks, 18 package safety tests, exact trace/HTML reproduction and package inspection; observed results are in the release notes. CI NOT_RUN per owner instruction;
+  earlier Windows/Linux M1 results remain historical evidence. No new Windows
+  support claim, infrastructure, package dependency or signing key is introduced.
+- Source packages include31 tracked files plus the manifest. Update only existing
+  artifact-version wiring; retain workflow triggers, caps, guards and permissions.
+  Keep all earlier releases, tags, assets and signatures unchanged.
+
 ## 0.1.3-preview.1
 
 - Add an explanatory stale-completion-ignored diagnostic with a lock-captured
