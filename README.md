@@ -12,7 +12,7 @@ The dependency policy and executable verifier are C#. The HTML demo replays deci
 The existing setup, validation results and release boundaries continue below.
 <!-- reviewer-entry:end -->
 
-[Download the offline replay](https://github.com/pouriajamali/service-reliability-lab/releases/download/v0.1.3-preview.1/service-reliability-demo.html) · [Try the hosted replay](https://pouriajamali.site/demo/service-reliability/) · [Release v0.1.3-preview.1](https://github.com/pouriajamali/service-reliability-lab/releases/tag/v0.1.3-preview.1) · [Source and tests](src/Reliability/ReadPolicy.cs) · [Design decisions](docs/DESIGN.md)
+[Download the offline replay](https://github.com/pouriajamali/service-reliability-lab/releases/download/v0.1.4-preview.1/service-reliability-demo.html) · [Try the hosted replay](https://pouriajamali.site/demo/service-reliability/) · [Release v0.1.4-preview.1](https://github.com/pouriajamali/service-reliability-lab/releases/tag/v0.1.4-preview.1) · [Source and tests](src/Reliability/ReadPolicy.cs) · [Design decisions](docs/DESIGN.md)
 
 A failing reference-data service should not receive an unlimited stream of retries.
 This C#/.NET sample makes the boundary explicit: a small attempt budget, a circuit
@@ -25,14 +25,14 @@ directly from a downloaded source ZIP.
 
 ## Download the preview
 
-[Download the HTML replay](https://github.com/pouriajamali/service-reliability-lab/releases/download/v0.1.3-preview.1/service-reliability-demo.html),
+[Download the HTML replay](https://github.com/pouriajamali/service-reliability-lab/releases/download/v0.1.4-preview.1/service-reliability-demo.html),
 then open that file in a browser. No install, account, .NET or network service is
 needed. Select **Outage → circuit opens** and **Run scenario**: the final view has
 6 dependency calls, 1 blocked request and an Open circuit. Select the recovery
 scenario to see one additional probe and a Closed circuit. These are recorded
 synthetic decisions, not live requests or latency measurements.
 
-[Release 0.1.3-preview.1](https://github.com/pouriajamali/service-reliability-lab/releases/tag/v0.1.3-preview.1)
+[Release 0.1.4-preview.1](https://github.com/pouriajamali/service-reliability-lab/releases/tag/v0.1.4-preview.1)
 also provides the source ZIP, `BUILD-MANIFEST.json`, `SIGNING-PUBLIC-KEY.pub`,
 `SHA256SUMS.txt` and its detached OpenSSH signature. The source manifest records
 the exact Git commit/tree and every source file's size and SHA-256. The library and 71-check verifier require the SDK below. Earlier tagged
@@ -40,7 +40,7 @@ releases retain their original bytes and signatures.
 
 ## Run in ten minutes
 
-Install the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) and
+Install the exact [.NET 10.0.404 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) and
 Python 3.12 or later. No NuGet packages, Python packages or broker credentials are
 needed.
 
@@ -72,7 +72,7 @@ From a clean Git checkout, with Git and Python 3.12+:
 ```sh
 python scripts/test_package.py
 python scripts/package.py --commit FULL_40_CHARACTER_HEAD_SHA
-python scripts/check_package.py --directory artifacts/release-v0.1.3-preview.1 --commit FULL_40_CHARACTER_HEAD_SHA --repository .
+python scripts/check_package.py --directory artifacts/release-v0.1.4-preview.1 --commit FULL_40_CHARACTER_HEAD_SHA --repository .
 ```
 
 Use the value from `git rev-parse HEAD`. The packager accepts only its explicit
@@ -187,7 +187,7 @@ six bounded fixtures (71 passing on both native CI operating systems). Optional 
 trace output uses CreateNew and is capped at32KiB. The four demo traces/HTML are
 unchanged. This is synthetic policy evidence, not live service or latency evidence.
 
-## Bounded native CI and SDK source
+## Historical native CI and SDK source
 
 The existing sequential Ubuntu24/Windows2025 rows use trusted vendor Python/OS
 starter tooling, then project12's own actual cgroup/Job/held-child and SDK0 guards.
@@ -207,7 +207,7 @@ caps stay six cases/eight calls/64events each. Required failures remain failures
 
 Original restore/feed/audit/apphost semantics are preserved. The actual implicit
 NuGet graph is recorded from resolver assets instead of hiding potential fetches.
-There are no explicit PackageReferences; source packaging contains30 tracked
+There are no explicit PackageReferences; source packaging contains31 tracked
 source/metadata files plus BUILD-MANIFEST, not raw or materialized SDK/runtime
 binaries. The source ZIP and exact sealed tools/sdk10-members.jsonl alone have an
 8MiB ceiling; the inventory is also pinned by exact size and hash. Every other
@@ -217,3 +217,22 @@ and assets remain unchanged.
 Both native rows, 18 package safety tests and cross-platform package-byte comparison
 passed in [the M1 source validation](https://github.com/pouriajamali/service-reliability-lab/actions/runs/44071254245).
 The six-fixture C# evidence had the same SHA-256 on both operating systems.
+
+## Toolchain maintenance — 2026-11-20
+
+`global.json` selects stable SDK **10.0.404** exactly, disables SDK roll-forward,
+and excludes prereleases. Install that SDK before the quick-start commands;
+a missing exact SDK is an error rather than a silent compiler change. The library
+still targets .NET 10 LTS (runtime servicing **10.0.15**, C# 14). These are the
+current .NET 10 servicing versions in the [official release index](https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/releases-index.json).
+.NET 11 is stable, but this sample has no requirement for its new APIs; a major
+migration would add no demonstrated product benefit. Both published support dates
+are November 14, 2028 in the [official support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core).
+The source package now includes the SDK pin. No SDK/runtime binaries are bundled.
+
+Maintenance validation: the local Ubuntu 24.04 route requires all 71 policy checks, 18 package safety tests and exact source-package inspection; observed results are recorded in the release notes. CI: **NOT_RUN per owner instruction**.
+The historical Windows/Linux CI links above describe M1; they are not a fresh
+maintenance run. The available Windows 26H2 host has no confirmed vendor support
+entry for this exact .NET combination, so no new Windows execution is claimed.
+Epoch/old-completion behavior, retry/circuit policy, replay-v1 and the four demo
+fixtures remain unchanged. This update adds no HA, latency or performance claim.
